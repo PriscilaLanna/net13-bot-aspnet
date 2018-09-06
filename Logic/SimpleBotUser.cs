@@ -44,7 +44,9 @@ namespace SimpleBot
 
             var filtro = Builders<UserProfile>.Filter.Eq("id", id);
 
-            return col.Find(filtro).FirstOrDefault();
+            var o = col.Find(filtro).FirstOrDefault();
+
+            return o;
         }
 
         public static void SetProfile(string id, UserProfile profile)
@@ -55,7 +57,7 @@ namespace SimpleBot
 
             var filtro = Builders<UserProfile>.Filter.Eq("id", id);
 
-            col.ReplaceOne(filtro, profile);
+            col.ReplaceOne(filtro, profile,new UpdateOptions {IsUpsert = true });
         }
     }
 }
