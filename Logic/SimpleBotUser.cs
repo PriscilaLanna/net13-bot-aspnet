@@ -5,59 +5,33 @@ using System.Web;
 using MongoDB;
 using MongoDB.Bson;
 using MongoDB.Driver;
+using SimpleBot.Repository;
 
 namespace SimpleBot
 {
-    public class SimpleBotUser
+    public static class SimpleBotUser
     {
+        static IUserProfileRepository _userProfile;
+
+        static SimpleBotUser()
+        {
+            _userProfile = new UserProfileMongoRepository("mongodb://127.0.0.1");
+        }
+
         public static string Reply(Message message)
         {
-            var client = new MongoClient("mongodb://localhost:27017");
-
-            var profile = GetProfile(message.Id);
-
-            profile.Visitas += 1;
-
-            SetProfile(message.Id, profile);
-
-          
-            var doc = new BsonDocument()
+            try
             {
-                {"id", message.Id },
-                {"texto", message.Text },
-                {"app", "teste" }
-            };
+                var id = message.Id;
 
-            var db = client.GetDatabase("config");
-            var col = db.GetCollection<BsonDocument>("Tabela1");
+                var profile = _userProfile.GetProfile(id);
 
-            col.InsertOne(doc);
+                profile.Visitas += 1;
 
-            return $"{message.User} disse '{message.Text}'";
-        }
+                _userProfile.SetProfile(id, profile);
 
-        public static UserProfile GetProfile(string id)
-        {
-            var client = new MongoClient("mongodb://localhost:27017");
-            var db = client.GetDatabase("config");
-            var col = db.GetCollection<UserProfile>("Tabela1");
-
-            var filtro = Builders<UserProfile>.Filter.Eq("id", id);
-
-            var o = col.Find(filtro).FirstOrDefault();
-
-            return o;
-        }
-
-        public static void SetProfile(string id, UserProfile profile)
-        {
-            var client = new MongoClient("mongodb://localhost:27017");
-            var db = client.GetDatabase("config");
-            var col = db.GetCollection<UserProfile>("Tabela1");
-
-            var filtro = Builders<UserProfile>.Filter.Eq("id", id);
-
-            col.ReplaceOne(filtro, profile,new UpdateOptions {IsUpsert = true });
-        }
+                return $"{message.User} disse '{message.Text} e mandou {profile.Visitas} mensagens'";
+            }catch(Exception ex) { return string.Empty; }
+        }       
     }
 }
